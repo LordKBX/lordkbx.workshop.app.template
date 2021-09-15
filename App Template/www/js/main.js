@@ -46,7 +46,7 @@ function mainInit() {
                                 console.log(data[j]);
                                 if(data[j].search('segments__') === 0){
                                     console.log(data[j]);
-                                    filename = data[j].replace('segments__','').replace('.html','').replace('.css','').replace('__','/');
+                                    filename = data[j].replace('segments__','').replace('.html','').replace('.css','');
 
                                     if(data[j].search('.html') != -1){ injectSegment(path+data[j], filename); }
                                     if(data[j].search('.css') != -1){ injectCss(path+data[j], filename); }
@@ -89,7 +89,7 @@ function injectSegment(path, name){
     DirectReadDataFile(path, function(data){
         section = document.createElement('section');
         section.setAttribute('id', 'section_'+name);
-        section.setAttribute('style', 'display:'+((default_segment == name)?'block':'none'));
+        section.setAttribute('style', 'display:'+((default_segment == name.replace('__','/'))?'block':'none'));
         section.innerHTML = data;
         document.body.querySelector('.app').appendChild(section);
     });
@@ -135,9 +135,9 @@ function buildMenu(path){
 }
 
 function switchToSection(name){
-    if(document.querySelector('.app #section_'+name) === null){ return; }
+    if(document.querySelector('.app #section_'+name.replace('/','__')) === null){ return; }
     $('.app section').css('display', 'none');
-    document.querySelector('.app #section_'+name).style.display = 'block';
+    document.querySelector('.app #section_'+name.replace('/','__')).style.display = 'block';
 }
 
 function resize_window(){
