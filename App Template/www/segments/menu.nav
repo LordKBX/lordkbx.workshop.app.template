@@ -1,0 +1,4 @@
+[
+{"name": "Home", "segment": "Home", "action": "", "icon": "home", "bottom": false},
+{"name": "Page2", "segment": "Page2/index", "action": "", "icon": "comment", "bottom": false}
+]

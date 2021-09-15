@@ -1,5 +1,17 @@
-cordova plugin add cordova-plugin-compat cordova-plugin-console cordova-plugin-device cordova-plugin-file cordova-plugin-nativestorage cordova-plugin-qrscanner cordova-plugin-screen-orientation cordova-plugin-splashscreen cordova-plugin-statusbar cordova-plugin-whitelist cordova-sqlite-storage
+cordova plugin add cordova-plugin-console cordova-plugin-device cordova-plugin-file cordova-plugin-nativestorage cordova-plugin-screen-orientation cordova-plugin-splashscreen cordova-plugin-statusbar cordova-plugin-whitelist cordova-sqlite-storage cordova-plugin-dialogs
 
-cordova create "Check-in Base Legacy" fr.ekaton.checkin.baselegacy "Check-in Base Legacy"
+cordova create "Folder Name" fr.ekaton.appid "Display Name"
 
-chokidar log-timestamp node-windows websocket
+npm install cordova -g
+nom install chokidar log-timestamp node-windows websocket
+
+
+/!\ Liste des choses à éviter dans l'appli mobile:
+	- Mettre un élément custom ailleurs que dans le dossier segments
+	- Mettre des _ dans les noms de fichiers 
+	et plus particulièrement __ qui seras interprété comme un / 
+	dans le dossier data pour live reload
+	- Mettre plus d'un fichier .nav, seul le premier dans l'ordre alphanumérique seras traité
+	- Ne pas charger directement les fichier depuis le dossier segments(url dans page), 
+	les ressources du dossier segments ne sont pas autorisées à être chargé 
+	par la vue Web sur iOS ce qui implique de devoir les charger via l'API FileSystem

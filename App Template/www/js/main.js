@@ -5,6 +5,8 @@ var default_segment = 'Home';
 var current_segment = 'Home';
 var previous_segment = 'Home';
 
+var menuIsOn = false;
+
 function mainInit() {
     // Cordova is now initialized. Have fun!
     console.log('Running cordova-' + cordova.platformId + '@' + cordova.version);
@@ -24,15 +26,16 @@ function mainInit() {
                 previous_segment = clone(settings.default_segment);
 
                 console.log('=> Load global style');
-                links = ['css/bootstrap-cerulean.css', 'css/app.css'];
+                links = ['css/bootstrap.min.css', 'css/bootstrap-theme.min.css', 'css/app.css'];
                 for(i=0; i<links.length; i++){
                     link = document.createElement('link');
                     link.setAttribute('media', 'all');
                     link.setAttribute('type', 'text/css');
                     link.setAttribute('rel', 'stylesheet');
-                    link.setAttribute('href', baseConf+dbgPath(links[i]));
+                    link.setAttribute('href', cordova.file.applicationDirectory+'www/'+links[i]);
                     document.body.appendChild(link);
                 }
+                injectScript('js/bootstrap.min.js');
 
                 console.log('=> Load segments');
                 path = (appMode == 'debug')?baseConf:baseConf+'segments/';
@@ -43,23 +46,28 @@ function mainInit() {
                                 console.log(data[j]);
                                 if(data[j].search('segments__') === 0){
                                     console.log(data[j]);
-                                    if(data[j].search('.html') != -1){ injectSegment(path+data[j], data[j].replace('segments__','').replace('.html','')); }
-                                    if(data[j].search('.css') != -1){ injectCss(path+data[j], data[j].replace('segments__','').replace('.css','')); }
+                                    filename = data[j].replace('segments__','').replace('.html','').replace('.css','').replace('__','/');
+
+                                    if(data[j].search('.html') != -1){ injectSegment(path+data[j], filename); }
+                                    if(data[j].search('.css') != -1){ injectCss(path+data[j], filename); }
                                     if(data[j].search('.js') != -1){ injectScript(path+data[j]); }
+                                    if(data[j].search('.nav') != -1){ buildMenu(path+data[j]); }
                                 }
                             }
                         }
                         else{
                             for(var k=0; k<data.length; k++){
-                                if(data[k].search('.html') != -1){ injectSegment(path+data[k], data[k].replace('.html','')); }
-                                if(data[k].search('.css') != -1){ injectCss(path+data[k], data[k].replace('.css','')); }
+                                filename = data[k].replace('.html','').replace('.css','');
+                                if(data[k].search('.html') != -1){ injectSegment(path+data[k], filename); }
+                                if(data[k].search('.css') != -1){ injectCss(path+data[k], filename); }
                                 if(data[k].search('.js') != -1){ injectScript(path+data[k]); }
+                                if(data[j].search('.nav') != -1){ buildMenu(path+data[k]); }
                             }
                         }
                         console.log(JSON.stringify(data));
                     }
                 });
-                if(navigator.userAgent.search('iPad') != -1 && navigator.userAgent.search('iPhone') != -1){ $('.app').addClass('ios'); }
+                if(navigator.userAgent.search('iPad') != -1 || navigator.userAgent.search('iPhone') != -1){ setTimeout("document.body.className = 'ios';", 200); }
 			});
 		}, onErrorFunc);
 	}, onErrorFunc);
@@ -94,6 +102,35 @@ function injectCss(path, name){
         css.setAttribute('id', 'style_'+name);
         css.innerHTML = data;
         document.body.appendChild(css);
+    });
+}
+
+function buildMenu(path){
+    if(menuIsOn === true){ return; }
+    baseConf = (appMode == 'debug')?cordova.file.dataDirectory:cordova.file.applicationDirectory+'www/';
+    DirectReadDataFile(path, function(data){
+        try{ 
+            menuData = JSON.parse(data);
+            console.log('menu data', menuData);
+
+            nav = document.createElement('nav');
+
+            for(i=0; i<menuData.length; i++){
+                link = document.createElement('a');
+                link.setAttribute('onclick', "switchToSection('"+menuData[i].segment+"');"+((menuData[i].action !== undefined && menuData[i].action !== null)?menuData[i].action:'') );
+                if(menuData[i].bottom === true){
+                    link.setAttribute('style', 'float: bottom;');
+                }
+
+                link.innerHTML = ((menuData[i].icon !== undefined && menuData[i].icon !== null)?'<span class="glyphicon glyphicon-'+menuData[i].icon+'"></span>':'')
+                    + '<span>' + menuData[i].name + '</span>';
+                nav.appendChild(link);
+            }
+
+            document.body.appendChild(nav);
+
+        }
+        catch(err){ console.error(err); return; }
     });
 }
 

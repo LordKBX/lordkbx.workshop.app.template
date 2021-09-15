@@ -1,3 +1,12 @@
 body, .app, .app section{ background-color:#6e6e6e; color:#acacac;}
 h1{ color:#bbbbFF; }
 button{ color:#000; }
+
+.glyphicon{ font-family: 'Glyphicons Halflings' !important; }
+
+nav{
+	padding: 20px;
+	position: relative;
+}
+.ios nav{ margin-top: 20px; }
+nav a{ color: #ffffff; }

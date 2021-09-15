@@ -24,7 +24,6 @@ function listDir(path, callback){
 			tab = [];
 		    for (i=0; i<entries.length; i++) {
 		    	tab.push(entries[i].name);
-		        console.log(entries[i].name);
 		    }
 		  	callback(tab);
 		  },
@@ -36,6 +35,45 @@ function listDir(path, callback){
 	  }, function (err) {
 		callback(false);
 		console.error('listDir error 1', err);
+	  }
+	);
+  }
+
+function cleanDir(path, callback){
+	window.resolveLocalFileSystemURL(path,
+	  function (fileSystem) {
+		var reader = fileSystem.createReader();
+		reader.readEntries(
+		  function (entries) {
+			console.log(entries);
+			var i;
+			tab = [];
+		    for (i=0; i<entries.length; i++) {
+		        fileSystem.getFile(entries[i].name, { create: false }, function (fileEntry) {
+                    fileEntry.remove(
+                    	function () {
+                    	}, 
+                    	function (error) {
+                    		console.error('cleanDir error 3', err);
+                    		callback(false);
+                    		return;
+                    	}, 
+                    	function () {
+
+                    	}
+                    );
+                });
+		    }
+		  	callback(true);
+		  },
+		  function (err) {
+		  	callback(false);
+			console.error('cleanDir error 2', err);
+		  }
+		);
+	  }, function (err) {
+		callback(false);
+		console.error('cleanDir error 1', err);
 	  }
 	);
   }
@@ -122,10 +160,11 @@ function subWriteDataFile(path, endPath, data, dirEntry, callback) {
 
 function onDeviceReady() {
 	// Cordova is now initialized. Have fun!
-	
+
 	window.resolveLocalFileSystemURL(cordova.file.applicationDirectory+'www/', function (dirEntry) {
 		console.log('file system open: ' + dirEntry.name);
 		dirEntry.getFile("mode.txt", { create: false, exclusive: false }, function (fileEntry) {
+			cleanDir(cordova.file.dataDirectory, function(e){});
 			readFile(fileEntry, function(ret){
 				if(ret.indexOf('debug') === 0){
 					appMode = 'debug';
@@ -161,7 +200,11 @@ function onDeviceReady() {
 							loadedFiles = loadedFiles + 1;
 							console.log('File loaded '+loadedFiles+'/'+nbFiles);
 							if(loadedFiles == nbFiles){
-								if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ location.href = cordova.file.dataDirectory + 'index.html'; }
+								if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ 
+									if(navigator.userAgent.indexOf('Android') != -1)
+										{location.href = cordova.file.dataDirectory + 'index.html';}
+									//else { setTimeout('location.reload();', 200); }
+								}
 								loadDebug();
 							}
 						  });
