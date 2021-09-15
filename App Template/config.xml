@@ -1,0 +1,51 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="fr.ekaton.template.app" ios-id="frekatontemplateapp" version="1.2.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>App Template</name>
+    <description>
+        A sample Apache Cordova application that include a live reload mode
+    </description>
+    <author email="io@ekaton.fr" href="http://www.ekaton.fr/">EKATON SA</author>
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-intent href="ws://*" />
+    <allow-intent href="wss://*" />
+    <allow-intent href="tel:*" />
+    <allow-intent href="sms:*" />
+    <allow-intent href="mailto:*" />
+    <allow-intent href="geo:*" />
+    <allow-intent href="*" />
+    <platform name="android">
+        <allow-intent href="market:*" />
+        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
+          <application android:usesCleartextTraffic="true" />
+        </edit-config>
+        <preference name="loadUrlTimeoutValue" value="700000" />
+    </platform>
+    <platform name="ios">
+        <allow-intent href="itms:*" />
+        <allow-intent href="itms-apps:*" />
+        
+        <preference name="WKWebViewOnly" value="true" />
+        <feature name="CDVWKWebViewEngine">
+            <param name="ios-package" value="CDVWKWebViewEngine" />
+        </feature>
+        <feature name="DisableHttpCachePlugin">
+            <param name="ios-package" value="DisableHttpCachePlugin"/>
+            <param name="onload" value="true" />
+        </feature>
+        <preference name="CordovaWebViewEngine" value="CDVWKWebViewEngine" />
+        <preference name="AllowBackForwardNavigationGestures" value="true" />
+        <preference name="Allow3DTouchLinkPreview" value="false" />
+        <preference name="AllowUntrustedCerts" value="on" />
+        <preference name="InterceptRemoteRequests" value="all" />
+        <preference name="NativeXHRLogging" value="full" />
+        <feature name="CordovaDisableNSURLCache">
+            <param name="ios-package" value="CordovaDisableNSURLCache" onload="true"/>
+        </feature>
+    </platform>
+    <preference name="allowFileAccessFromFileURLs" value="true" />
+    <allow-navigation href="ws://192.168.1.*" />
+    <allow-navigation href="*" />
+</widget>

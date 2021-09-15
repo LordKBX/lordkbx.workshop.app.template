@@ -1,0 +1,5 @@
+cordova plugin add cordova-plugin-compat cordova-plugin-console cordova-plugin-device cordova-plugin-file cordova-plugin-nativestorage cordova-plugin-qrscanner cordova-plugin-screen-orientation cordova-plugin-splashscreen cordova-plugin-statusbar cordova-plugin-whitelist cordova-sqlite-storage
+
+cordova create "Check-in Base Legacy" fr.ekaton.checkin.baselegacy "Check-in Base Legacy"
+
+chokidar log-timestamp node-windows websocket
