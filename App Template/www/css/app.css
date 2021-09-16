@@ -2,8 +2,12 @@
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	margin: 0; padding: 0;
 }
-html{background:transparent !important; height:100% !important;-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;}
-body{ height:100% !important; }
+html{background:transparent !important; height:100% !important;
+	-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; 
+	-moz-user-select: none; -ms-user-select: none; user-select: none;}
+body{ height:100% !important; overflow:hidden; }
+html.ios{ height: calc(100% + 200px) !important; }
+
 .glyphicon{ font-family: 'Glyphicons Halflings' !important; }
 .app{ 
     background-color: #ffffff; 
@@ -11,9 +15,38 @@ body{ height:100% !important; }
     top: 0px; left: 0px;
     width: 100% !important; height:100% !important; 
     margin: 0 !important; border:0 !important;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
-.ios .app{ height:calc(100% + 20px) !important;   }
+.ios .app{ height:calc(100% + 90px) !important; padding-bottom: 20px; }
 
-.app section{ padding: 10px 10px 0 10px; }
-.ios .app section{ padding: 30px 10px 0 10px; }
+.app #header{ height:50px; background-color: #666666; color: #ffffff; position: fixed; top:0px; left:0px; width: 100%; }
+.ios .app #header{ padding-top:30px; height: 80px; }
+.app #header span{ font-size: 25px; line-height: 50px; padding-left: 10px; }
+
+.app section{ padding: 70px 10px 0 10px !important; }
+.app.headless section{ padding: 20px 10px 0 10px !important; }
+
+nav{
+	padding: 20px;
+	position: fixed;
+	top:51px;
+	height: calc(100% - 51px);
+	min-width: 150px;
+	max-width: 150px;
+	background: rgba(0, 0, 0, 0.5);
+
+	transition-property: left;
+	transition-duration: 0.5s;
+}
+.ios nav{ top: 81px; height: calc(100% - 81px); }
+
+nav a{ display: block;padding: 5px; }
+nav a, nav a:active, nav a:visited, nav a:hover, nav a:focus{ color: #ffffff; }
+nav a .glyphicon{ margin-right:2px; }
+nav a span{ font-size: 20px; line-height: 35px; vertical-align: middle; }
+nav a .right{ padding-left: 5px; }
+
+nav .bottom{ position:absolute; bottom: 10px; }
+nav a .fileicon{ display: inline-block; height: 35px; width: 35px; background-size: 20px; }
+

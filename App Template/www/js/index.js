@@ -5,6 +5,9 @@ var nbFiles = 0;
 var loadedFiles = 0;
 var appMode = 'debug';
 var debugHost = '';
+var dataTab = [];
+
+function MGUID(){var currentDateMilliseconds=new Date().getTime();var currentDateSeconds=parseInt(currentDateMilliseconds/1000,10);var currentDateMilli=currentDateMilliseconds-(currentDateSeconds*1000);var str="_"+currentDateSeconds+'-'+currentDateMilli+'-pxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(currentChar){var randomChar=(currentDateMilliseconds+Math.random()*16)%16|0;currentDateMilliseconds=Math.floor(currentDateMilliseconds/16);return(currentChar==='x'?randomChar:(randomChar&0x7|0x8)).toString(16);});return str.substring(1);}
 
 function clone(obj) {
 	if (null === obj || "object" != typeof obj) return obj;
@@ -92,6 +95,25 @@ function readFile(fileEntry, callback) {
     }, function(e){ console.log("Failed file read: " + e.toString()); });
 }
 
+function loadIFileInBlob(filename, dest_id, file_type, callback) { //type: "image/png"
+    window.resolveLocalFileSystemURL(filename, function success(fileEntry) {
+        fileEntry.file(function (file) {
+            var reader = new FileReader();
+            reader.onloadend = function() {
+            	console.log(this)
+                if (this.result) {
+                    var blob = new Blob([new Uint8Array(this.result)], { type: file_type });
+                    callback(window.URL.createObjectURL(blob), dest_id)
+                    elem.src = window.URL.createObjectURL(blob);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }, function () {
+        console.log("File not found: ");
+    });
+}
+
 function writeFile(fileEntry, dataObj, callback) {
     // Create a FileWriter object for our FileEntry (log.txt).
     fileEntry.createWriter(function (fileWriter) {
@@ -113,7 +135,7 @@ function writeFile(fileEntry, dataObj, callback) {
 
         fileWriter.write(dataObj);
 		
-		if(callback !== undefined){ callback(); }
+		if(callback !== undefined){ callback(fileEntry.name); }
     });
 }
 
@@ -158,6 +180,62 @@ function subWriteDataFile(path, endPath, data, dirEntry, callback) {
 	}, function(error){ console.error(error); });
 }
 
+function b64toBlob(b64Data, contentType, sliceSize) {
+        contentType = contentType || '';
+        sliceSize = sliceSize || 512;
+
+        var byteCharacters = null;
+        try{ byteCharacters = atob(unescape(encodeURIComponent(b64Data))); }
+        catch(error){ console.error(error); return null; }
+
+        var byteArrays = [];
+
+        for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            var slice = byteCharacters.slice(offset, offset + sliceSize);
+
+            var byteNumbers = new Array(slice.length);
+            for (var i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+
+            var byteArray = new Uint8Array(byteNumbers);
+
+            byteArrays.push(byteArray);
+        }
+
+      var blob = new Blob(byteArrays, {type: contentType});
+      return blob;
+}
+
+/**
+ * Create a Image file according to its database64 content only.
+ * 
+ * @param folderpath {String} The folder where the file will be created
+ * @param filename {String} The name of the file that will be created
+ * @param content {Base64 String} Important : The content can't contain the following string (data:image/png[or any other format];base64,). Only the base64 string is expected.
+ */
+function savebase64AsFile(folderpath,filename,content,contentType, callback){
+    // Convert the base64 string in a Blob
+    var DataBlob = b64toBlob(content,contentType);
+    if(DataBlob === null){ console.log('File =>', filename); }
+    
+    console.log("Starting to write the file :3");
+    
+    window.resolveLocalFileSystemURL(folderpath, function(dir) {
+        console.log("Access to the directory granted succesfully");
+		dir.getFile(filename, {create:true}, function(file) {
+            console.log("File created succesfully.");
+            file.createWriter(function(fileWriter) {
+                console.log("Writing content to file");
+                fileWriter.write(DataBlob);
+                callback(filename);
+            }, function(){
+                alert('Unable to save file in path '+ folderpath);
+            });
+		});
+    });
+}
+
 function onDeviceReady() {
 	// Cordova is now initialized. Have fun!
 
@@ -179,13 +257,14 @@ function onDeviceReady() {
 					};
 
 					socket.onmessage = function(event) {
-					  console.log(`[message] Data received from server:`, event.data.substring(0, 100)+((event.data.length>100)?'...':''));
+					  //console.log(`[message] Data received from server:`, event.data.substring(0, 100)+((event.data.length>100)?'...':''));
 					  if(event.data == 'READY'){
 						  socket.send("List");
 						  }
 					  else if(event.data.indexOf('List:') === 0){
 							try{
 								data = JSON.parse(event.data.replace('List:', ''));
+								console.log(data);
 								nbFiles = data.length;
 								for(i=0; i<data.length; i++){
 									socket.send("Load:"+data[i]);
@@ -195,19 +274,61 @@ function onDeviceReady() {
 						  }
 					  else if(event.data.indexOf('Load:') === 0){
 						  tdata = event.data.split(':');
-						  console.log(tdata);
-						  WriteDataFile(tdata[1], Base64.decode(tdata[2]), function(ret){
-							loadedFiles = loadedFiles + 1;
-							console.log('File loaded '+loadedFiles+'/'+nbFiles);
-							if(loadedFiles == nbFiles){
-								if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ 
-									if(navigator.userAgent.indexOf('Android') != -1)
-										{location.href = cordova.file.dataDirectory + 'index.html';}
-									//else { setTimeout('location.reload();', 200); }
-								}
-								loadDebug();
-							}
-						  });
+						  //console.log(tdata);
+						  if(tdata.length >= 4){
+						  	pagination = tdata[2].split('|');
+						  	if(dataTab[tdata[1]] === undefined){ dataTab[tdata[1]] = []; }
+						  	if(parseInt(pagination[0]) == 1){ dataTab[tdata[1]] = []; }
+						  	dataTab[tdata[1]][parseInt(pagination[0])-1] = tdata[3];
+						  	if(parseInt(pagination[0]) == parseInt(pagination[1])){
+						  		//console.log(dataTab[tdata[1]].join(''));
+						  		contentTypeArray={
+						  			'png':'image/png', 
+						  			'jpg':'image/jpeg', 
+						  			'jpeg':'image/jpeg', 
+						  			'gif':'image/gif', 
+						  			'bmp':'image/bmp', 
+						  			'webp':'image/webp'
+						  			};
+
+						  		ext = tdata[1].toLowerCase().split('.');
+						  		ext = ext[ext.length - 1];
+						  		contentType = (contentTypeArray[ext] === undefined)?'text/plain':contentTypeArray[ext];
+
+						  		savebase64AsFile(
+						  			cordova.file.dataDirectory,
+						  			dbgPath(tdata[1]),
+						  			dataTab[tdata[1]].join(''),
+						  			contentType, 
+						  			function(ret){
+						  				loadedFiles = loadedFiles + 1;
+										console.log('File loaded '+loadedFiles+'/'+nbFiles+' ('+ret+')');
+										if(loadedFiles == nbFiles){
+											if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ 
+												if(navigator.userAgent.indexOf('Android') != -1)
+													{location.href = cordova.file.dataDirectory + 'index.html';}
+												//else { location.href = cordova.file.applicationDirectory + 'www/index.html'; }
+											}
+											loadDebug();
+										}
+						  			}
+						  		);
+						  	}
+						  }
+						  else{
+						  	WriteDataFile(tdata[1], Base64.decode(tdata[2]), function(ret){
+								loadedFiles = loadedFiles + 1;
+								console.log('File loaded '+loadedFiles+'/'+nbFiles);
+								if(loadedFiles == nbFiles){
+									if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ 
+										if(navigator.userAgent.indexOf('Android') != -1)
+											{location.href = cordova.file.dataDirectory + 'index.html';}
+										//else { location.href = cordova.file.applicationDirectory + 'www/index.html'; }
+										}
+										loadDebug();
+									}
+								});
+						  	}
 						  }
 					  else if(event.data.indexOf('change|') === 0){
 						  location.reload();
@@ -255,11 +376,13 @@ function loadDebug(){
 	document.head.querySelectorAll('base')[0].remove();
 
 	base = document.createElement('base');
-	base.setAttribute('href', cordova.file.dataDirectory);
+	//base.setAttribute('href', cordova.file.dataDirectory);
+	base.setAttribute('href', cordova.file.applicationDirectory+'www/');
 	document.head.appendChild(base);
 
 	script = document.createElement('script');
 	script.setAttribute('type', 'text/javascript');
-	script.setAttribute('src', cordova.file.dataDirectory+'js__main.js');
+	//script.setAttribute('src', cordova.file.dataDirectory+'js__main.js');
+	script.setAttribute('src', cordova.file.applicationDirectory+'www/js/main.js');
 	document.body.appendChild(script);
 }

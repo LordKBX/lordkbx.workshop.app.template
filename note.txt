@@ -12,6 +12,4 @@ nom install chokidar log-timestamp node-windows websocket
 	et plus particulièrement __ qui seras interprété comme un / 
 	dans le dossier data pour live reload
 	- Mettre plus d'un fichier .nav, seul le premier dans l'ordre alphanumérique seras traité
-	- Ne pas charger directement les fichier depuis le dossier segments(url dans page), 
-	les ressources du dossier segments ne sont pas autorisées à être chargé 
-	par la vue Web sur iOS ce qui implique de devoir les charger via l'API FileSystem
+	- les url dans les templates doivent être relatives au dossier segments

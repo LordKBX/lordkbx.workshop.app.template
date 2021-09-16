@@ -9,8 +9,8 @@ var args = { /* defaults */
 	debug: false
 };
 
-var adddir = fs.readFileSync("../services/appdir.txt")
-var directory = path.resolve('../'+adddir+'/www');
+var appdir = fs.readFileSync("../services/appdir.txt")
+var directory = path.resolve('../'+appdir+'/www');
 
 var port = 8345;
 
@@ -38,6 +38,7 @@ var watcher = null;
 wsServer.on('connect', function(connection) {
 	console.log((new Date()) + ' Connection accepted' + ' - Protocol Version ' + connection.webSocketVersion);
 	watcher = chokidar.watch(directory);
+	console.log('directory = ', directory);
 	interval = setInterval(function(e){
 		connection.sendUTF('ping', function(e){});
 	}, 3000);
@@ -70,10 +71,12 @@ wsServer.on('connect', function(connection) {
 				tab = [];
 				base = '';
 				line = 0;
+				excludeList = ['.DS_Store'];
 				for(index in wd){
 					if(line == 1){ base = index; }
 					if(line >= 1){
 						for(i=0; i<wd[index].length; i++){
+							if(excludeList.indexOf(wd[index][i]) != -1){ continue; }
 							tf = index.replace(base, '') + '/' + wd[index][i];
 							console.log(tf);
 							if(fs.statSync(base+tf).isFile()){
@@ -90,14 +93,36 @@ wsServer.on('connect', function(connection) {
 				tab = message.utf8Data.split(':');
 				fdata = null;
 				try{
+					//console.log(directory+tab[1]);
 					fdata = fs.readFileSync((directory+tab[1]).replace('/', path.sep));
 					fdata = fdata.toString('base64');
 				}
 				catch(error){ }
-			
-				data = 'Load:'+tab[1]+':'+fdata;
-				try{ connection.sendUTF(data, sendCallback);}
-				catch(error){ console.error(error); }
+				blockSize = 4000;
+				nbBlocks = (fdata.length > blockSize)?(parseInt(fdata.length / blockSize) + ((fdata.length % blockSize !== 0)?1:0)):1;
+
+				console.log(tab[1]);
+				console.log(' => ', 'nbBlocks = '+nbBlocks);
+				console.log(' => ', 'blockSize = '+blockSize);
+				console.log(' => ', 'fdata.length = '+fdata.length);
+				if(nbBlocks > 1){
+					totalLength = 0;
+					for(bl=0; bl<nbBlocks; bl = bl + 1){
+						max = ((bl+1) * blockSize);
+						if(max >= fdata.length){ max = fdata.length; }
+						dataBlock = fdata.substring(bl*blockSize, max);
+						totalLength = totalLength + dataBlock.length;
+						data = 'Load:'+tab[1]+':'+(bl+1)+'|'+nbBlocks+':'+dataBlock;
+						try{ connection.sendUTF(data, sendCallback);}
+						catch(error){ console.error(error); }
+					}
+					console.log(' => ', 'totalLength = '+totalLength);
+				}
+				else{
+					data = 'Load:'+tab[1]+':'+fdata;
+					try{ connection.sendUTF(data, sendCallback);}
+					catch(error){ console.error(error); }
+					}
 				}
 			else{ connection.sendUTF(message.utf8Data, sendCallback); }
 		}

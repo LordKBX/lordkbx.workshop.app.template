@@ -5,7 +5,9 @@ var default_segment = 'Home';
 var current_segment = 'Home';
 var previous_segment = 'Home';
 
+var menuData = [];
 var menuIsOn = false;
+var menuIsOnDisplay = false;
 
 function mainInit() {
     // Cordova is now initialized. Have fun!
@@ -65,9 +67,12 @@ function mainInit() {
                             }
                         }
                         console.log(JSON.stringify(data));
+                        setTimeout("if(menuIsOn == false){ $('.app').addClass('headless'); }", 300);
                     }
                 });
-                if(navigator.userAgent.search('iPad') != -1 || navigator.userAgent.search('iPhone') != -1){ setTimeout("document.body.className = 'ios';", 200); }
+                if(navigator.userAgent.search('iPad') != -1 || navigator.userAgent.search('iPhone') != -1){ 
+                    setTimeout("document.documentElement.className = 'ios';", 200); 
+                }
 			});
 		}, onErrorFunc);
 	}, onErrorFunc);
@@ -85,11 +90,34 @@ function injectScript(path){
 }
 
 function injectSegment(path, name){
-    baseConf = (appMode == 'debug')?cordova.file.dataDirectory:cordova.file.applicationDirectory+'www/';
     DirectReadDataFile(path, function(data){
+        baseConf = (appMode == 'debug')?cordova.file.dataDirectory+'segments__':cordova.file.applicationDirectory+'www/segments/';
+
         section = document.createElement('section');
         section.setAttribute('id', 'section_'+name);
         section.setAttribute('style', 'display:'+((default_segment == name.replace('__','/'))?'block':'none'));
+
+        regex = /src="(.*)"/g;
+        found = data.match(regex);
+        console.log('found = ', found);
+
+        if(found != null){
+            for(fi = 0; fi < found.length; fi++){
+                fil = baseConf + dbgPath(found[fi].replace('src="', '').replace('"', ''));
+
+                data = data.replace(found[fi], 'src="'+fil+'"');
+                /*
+                id = MGUID();
+                data = data.replace(found[fi], 'id="'+id+'"')
+                console.log('fil =', fil);
+                loadIFileInBlob(fil, id, 'image/png', function(ret, dest_id){
+                    console.log('ret =', ret);
+                    $('#'+dest_id).attr('src', ret);
+                })
+                */
+            }
+        }
+
         section.innerHTML = data;
         document.body.querySelector('.app').appendChild(section);
     });
@@ -107,37 +135,69 @@ function injectCss(path, name){
 
 function buildMenu(path){
     if(menuIsOn === true){ return; }
-    baseConf = (appMode == 'debug')?cordova.file.dataDirectory:cordova.file.applicationDirectory+'www/';
+    baseConf = (appMode == 'debug')?cordova.file.dataDirectory+'segments__':cordova.file.applicationDirectory+'www/segments/';
     DirectReadDataFile(path, function(data){
         try{ 
             menuData = JSON.parse(data);
             console.log('menu data', menuData);
 
+            divtop = document.createElement('div');
+            divtop.setAttribute('id', 'header');
+            divtop.innerHTML = '<span class="glyphicon glyphicon-menu-hamburger" onclick="toogleMenu();"></span> <span class="title">title</span>';
+            document.body.querySelector('.app').prepend(divtop);
+
             nav = document.createElement('nav');
+            nav.setAttribute('style', 'left:-150px');
+            nav.innerHTML = '<div class="top"></div><div class="bottom"></div>';
 
             for(i=0; i<menuData.length; i++){
                 link = document.createElement('a');
+                if(default_segment == menuData[i].segment){ document.body.querySelector('#header .title').innerText = menuData[i].name; }
                 link.setAttribute('onclick', "switchToSection('"+menuData[i].segment+"');"+((menuData[i].action !== undefined && menuData[i].action !== null)?menuData[i].action:'') );
-                if(menuData[i].bottom === true){
-                    link.setAttribute('style', 'float: bottom;');
-                }
+                
+                ctl = '<table><tbody><tr>';
+                if(menuData[i].icon !== undefined && menuData[i].icon !== null)
+                    { ctl += '<td><span class="glyphicon glyphicon-'+menuData[i].icon+'"></span></td>'; }
+                if(menuData[i].fileIcon !== undefined && menuData[i].fileIcon !== null)
+                    { ctl += '<td><span class="fileicon" style="background:url(\''+baseConf + dbgPath(menuData[i].fileIcon)+'\'); background-size: 100%; background-repeat: no-repeat;"></span></td>'; }
 
-                link.innerHTML = ((menuData[i].icon !== undefined && menuData[i].icon !== null)?'<span class="glyphicon glyphicon-'+menuData[i].icon+'"></span>':'')
-                    + '<span>' + menuData[i].name + '</span>';
-                nav.appendChild(link);
+                link.innerHTML = ctl + '<td class="right"><span>' + menuData[i].name + '</span></td></tr></tbody></table>';
+                if(menuData[i].bottom === true){ nav.querySelector('.bottom').appendChild(link); }
+                else{ nav.querySelector('.top').appendChild(link); }
             }
 
             document.body.appendChild(nav);
-
+            menuIsOn = true;
         }
         catch(err){ console.error(err); return; }
     });
 }
 
-function switchToSection(name){
-    if(document.querySelector('.app #section_'+name.replace('/','__')) === null){ return; }
+function switchToSection(id){
+    if(document.querySelector('.app #section_'+id.replace('/','__')) === null){ return; }
+    name = id;
+    for(i=0; i<menuData.length; i++){
+        if(menuData[i].segment == id){ name = menuData[i].name; }
+    }
+
     $('.app section').css('display', 'none');
-    document.querySelector('.app #section_'+name.replace('/','__')).style.display = 'block';
+    document.querySelector('.app #section_'+id.replace('/','__')).style.display = 'block';
+
+    toogleMenu(true);
+    document.body.querySelector('.app #header .title').innerText = name;
+}
+
+function toogleMenu(toClose){
+    pan = document.querySelector('nav');
+    if(menuIsOnDisplay === true || toClose === true){
+        pwidth = pan.offsetWidth;
+        pan.style.left = '-'+pwidth+'px';
+        menuIsOnDisplay = false;
+    }
+    else{
+        pan.style.left = '0px';
+        menuIsOnDisplay = true;
+    }  
 }
 
 function resize_window(){
