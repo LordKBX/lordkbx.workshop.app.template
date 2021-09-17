@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="fr.ekaton.template.app" ios-id="frekatontemplateapp" version="1.2.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="lordkbx.workshop.app.template" ios-id="lordkbxworkshopapptemplate" version="1.2.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>App Template</name>
     <description>
         A sample Apache Cordova application that include a live reload mode
     </description>
-    <author email="io@ekaton.fr" href="http://www.ekaton.fr/">EKATON SA</author>
+    <author email="kevboulain@gmail.com" href="https://www.developpez.net/forums/u638612/tiranuskbx/">Boulain Kevin</author>
     <content src="index.html" />
     <access origin="*" />
     <allow-intent href="http://*/*" />

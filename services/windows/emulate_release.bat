@@ -1,5 +1,6 @@
 REM @echo off
-cd /D %~dp0\..\app
+set /p appdir=<..\appdir.txt
+cd /D %~dp0\..\%appdir%
 echo "release" > .\www\mode.txt
-C:\Users\KevBo\AppData\Roaming\npm\cordova emulate android
+%AppData%\npm\cordova emulate android
 pause
