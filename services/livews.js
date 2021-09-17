@@ -112,14 +112,14 @@ wsServer.on('connect', function(connection) {
 						if(max >= fdata.length){ max = fdata.length; }
 						dataBlock = fdata.substring(bl*blockSize, max);
 						totalLength = totalLength + dataBlock.length;
-						data = 'Load:'+tab[1]+':'+(bl+1)+'|'+nbBlocks+':'+dataBlock;
+						data = 'Load:'+tab[1].replace(new RegExp('\\\\', 'g'), '/')+':'+(bl+1)+'|'+nbBlocks+':'+dataBlock;
 						try{ connection.sendUTF(data, sendCallback);}
 						catch(error){ console.error(error); }
 					}
 					console.log(' => ', 'totalLength = '+totalLength);
 				}
 				else{
-					data = 'Load:'+tab[1]+':'+fdata;
+					data = 'Load:'+tab[1].replace(new RegExp('\\\\', 'g'), '/')+':'+fdata;
 					try{ connection.sendUTF(data, sendCallback);}
 					catch(error){ console.error(error); }
 					}

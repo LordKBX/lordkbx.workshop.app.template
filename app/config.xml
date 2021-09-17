@@ -18,9 +18,6 @@
     <allow-intent href="*" />
     <platform name="android">
         <allow-intent href="market:*" />
-        <edit-config file="app/src/main/AndroidManifest.xml" mode="merge" target="/manifest/application">
-          <application android:usesCleartextTraffic="true" />
-        </edit-config>
         <preference name="loadUrlTimeoutValue" value="700000" />
     </platform>
     <platform name="ios">

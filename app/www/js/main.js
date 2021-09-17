@@ -174,6 +174,7 @@ function buildMenu(path){
 }
 
 function switchToSection(id){
+	console.log('switchToSection => '+id);
     if(document.querySelector('.app #section_'+id.replace('/','__')) === null){ return; }
     name = id;
     for(i=0; i<menuData.length; i++){

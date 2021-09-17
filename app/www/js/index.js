@@ -143,7 +143,7 @@ function onErrorFunc(evt){ console.error(evt); }
 
 function dbgPath(path){
 	if(path[0] == '/'){ path = path.replace('/', ''); }
-	if(appMode == 'debug'){ return path.replace(new RegExp('/', 'g'), '__'); }
+	if(appMode == 'debug'){ return path.replace(new RegExp('/', 'g'), '__').replace(new RegExp('\\\\', 'g'), '__'); }
 	else{ return path; }
 }
 
@@ -270,7 +270,7 @@ function onDeviceReady() {
 									socket.send("Load:"+data[i]);
 								}
 							}
-						  catch(error){}						  
+						  catch(error){}
 						  }
 					  else if(event.data.indexOf('Load:') === 0){
 						  tdata = event.data.split(':');
