@@ -18,68 +18,82 @@ function clone(obj) {
 
 function listDir(path, callback){
 	window.resolveLocalFileSystemURL(path,
-	  function (fileSystem) {
-		var reader = fileSystem.createReader();
-		reader.readEntries(
-		  function (entries) {
-			console.log(entries);
-			var i;
-			tab = [];
-		    for (i=0; i<entries.length; i++) {
-		    	tab.push(entries[i].name);
-		    }
-		  	callback(tab);
-		  },
-		  function (err) {
-		  	callback(false);
-			console.error('listDir error 2', err);
-		  }
-		);
-	  }, function (err) {
-		callback(false);
-		console.error('listDir error 1', err);
-	  }
+		function (fileSystem) {
+			var reader = fileSystem.createReader();
+			reader.readEntries(
+				function (entries) {
+					console.log(entries);
+					var i;
+					tab = [];
+					for (i=0; i<entries.length; i++) {
+						tab.push(entries[i].name);
+					}
+					callback(tab);
+				},
+				function (err) {
+					callback(false);
+					console.error('listDir error 2', err);
+				}
+			);
+			}, function (err) {
+			callback(false);
+			console.error('listDir error 1', err);
+		}
 	);
-  }
+}
+
+function createDir(pathParent, name, callback){
+	window.resolveLocalFileSystemURL(pathParent,
+		function (fileSystem) {
+			fileSystem.getDirectory(name, { create: true, exclusive: false }, 
+				function(ret){
+					callback(true);
+				}, 
+				function(ret){
+					callback(false);
+				}
+			);
+		}
+	);
+}
 
 function cleanDir(path, callback){
 	window.resolveLocalFileSystemURL(path,
-	  function (fileSystem) {
-		var reader = fileSystem.createReader();
-		reader.readEntries(
-		  function (entries) {
-			console.log(entries);
-			var i;
-			tab = [];
-		    for (i=0; i<entries.length; i++) {
-		        fileSystem.getFile(entries[i].name, { create: false }, function (fileEntry) {
-                    fileEntry.remove(
-                    	function () {
-                    	}, 
-                    	function (error) {
-                    		console.error('cleanDir error 3', err);
-                    		callback(false);
-                    		return;
-                    	}, 
-                    	function () {
-
-                    	}
-                    );
-                });
-		    }
-		  	callback(true);
-		  },
-		  function (err) {
-		  	callback(false);
-			console.error('cleanDir error 2', err);
-		  }
-		);
-	  }, function (err) {
-		callback(false);
-		console.error('cleanDir error 1', err);
-	  }
+		function (fileSystem) {
+			var reader = fileSystem.createReader();
+			reader.readEntries(
+				function (entries) {
+					var i;
+					tab = [];
+					for (i=0; i<entries.length; i++) {
+						fileSystem.getFile(entries[i].name, { create: false }, function (fileEntry) {
+							fileEntry.remove(
+								function () {
+								}, 
+								function (error) {
+									console.error('cleanDir error 3', err);
+									callback(false);
+									return;
+								}, 
+								function () {
+									
+								}
+							);
+						});
+					}
+					callback(true);
+				},
+				function (err) {
+					callback(false);
+					console.error('cleanDir error 2', err);
+				}
+			);
+			}, function (err) {
+			callback(false);
+			console.error('cleanDir error 1', err);
+		}
 	);
-  }
+}
 
 function readFile(fileEntry, callback) {
     fileEntry.file(function (file) {
@@ -89,10 +103,10 @@ function readFile(fileEntry, callback) {
             // console.log(fileEntry.fullPath + ": " + this.result);
 			if(callback !== undefined){
 				callback(this.result);
-				}
-        };
+			}
+		};
         reader.readAsText(file);
-    }, function(e){ console.log("Failed file read: " + e.toString()); });
+	}, function(e){ console.log("Failed file read: " + e.toString()); });
 }
 
 function loadIFileInBlob(filename, dest_id, file_type, callback) { //type: "image/png"
@@ -100,43 +114,42 @@ function loadIFileInBlob(filename, dest_id, file_type, callback) { //type: "imag
         fileEntry.file(function (file) {
             var reader = new FileReader();
             reader.onloadend = function() {
-            	console.log(this)
                 if (this.result) {
                     var blob = new Blob([new Uint8Array(this.result)], { type: file_type });
                     callback(window.URL.createObjectURL(blob), dest_id)
                     elem.src = window.URL.createObjectURL(blob);
-                }
-            };
+				}
+			};
             reader.readAsArrayBuffer(file);
-        });
-    }, function () {
+		});
+		}, function () {
         console.log("File not found: ");
-    });
+	});
 }
 
 function writeFile(fileEntry, dataObj, callback) {
     // Create a FileWriter object for our FileEntry (log.txt).
     fileEntry.createWriter(function (fileWriter) {
-
+		
         fileWriter.onwriteend = function() {
-            console.log("Successful file write...");
+            //console.log("Successful file write...");
             //readFile(fileEntry);
-        };
-
+		};
+		
         fileWriter.onerror = function (e) {
             console.log("Failed file write: " + e.toString());
-        };
-
+		};
+		
         // If data object is not passed in,
         // create a new Blob instead.
         if (!dataObj) {
             dataObj = new Blob(['some file data'], { type: 'text/plain' });
-        }
-
+		}
+		
         fileWriter.write(dataObj);
 		
 		if(callback !== undefined){ callback(fileEntry.name); }
-    });
+	});
 }
 
 function onErrorFunc(evt){ console.error(evt); }
@@ -154,11 +167,11 @@ function ReadDataFile(path, callback){
 	function(error){  console.error(error); });
 }
 
-function DirectReadDataFile(path, callback){
+function DirectReadDataFile(path, callback, callback2){
 	window.resolveLocalFileSystemURI(path, function (fileEntry) {
 		readFile(fileEntry, callback);
 	}, 
-	function(error){  console.error(error); });
+	function(error){  console.error(error); if(callback2 !== undefined){ callback2(); } });
 }
 
 function WriteDataFile(path, data, callback){
@@ -166,7 +179,7 @@ function WriteDataFile(path, data, callback){
 	tpath = path.split('/');
 	lpath = '';
 	if(tpath.length > 1){ for(i=0; i<tpath.length-1; i++){ lpath = tpath[i] + '/'; } }
-
+	
 	window.resolveLocalFileSystemURL(cordova.file.dataDirectory, function (dirEntry) {
 		subWriteDataFile(cordova.file.dataDirectory, cordova.file.dataDirectory+path,  data, dirEntry, callback);
 	}, 
@@ -181,68 +194,67 @@ function subWriteDataFile(path, endPath, data, dirEntry, callback) {
 }
 
 function b64toBlob(b64Data, contentType, sliceSize) {
-        contentType = contentType || '';
-        sliceSize = sliceSize || 512;
-
-        var byteCharacters = null;
-        try{ byteCharacters = atob(unescape(encodeURIComponent(b64Data))); }
-        catch(error){ console.error(error); return null; }
-
-        var byteArrays = [];
-
-        for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
-            var slice = byteCharacters.slice(offset, offset + sliceSize);
-
-            var byteNumbers = new Array(slice.length);
-            for (var i = 0; i < slice.length; i++) {
-                byteNumbers[i] = slice.charCodeAt(i);
-            }
-
-            var byteArray = new Uint8Array(byteNumbers);
-
-            byteArrays.push(byteArray);
-        }
-
-      var blob = new Blob(byteArrays, {type: contentType});
-      return blob;
+	contentType = contentType || '';
+	sliceSize = sliceSize || 512;
+	
+	var byteCharacters = null;
+	try{ byteCharacters = atob(unescape(encodeURIComponent(b64Data))); }
+	catch(error){ console.error(error); return null; }
+	
+	var byteArrays = [];
+	
+	for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+		var slice = byteCharacters.slice(offset, offset + sliceSize);
+		
+		var byteNumbers = new Array(slice.length);
+		for (var i = 0; i < slice.length; i++) {
+			byteNumbers[i] = slice.charCodeAt(i);
+		}
+		
+		var byteArray = new Uint8Array(byteNumbers);
+		
+		byteArrays.push(byteArray);
+	}
+	
+	var blob = new Blob(byteArrays, {type: contentType});
+	return blob;
 }
 
 /**
- * Create a Image file according to its database64 content only.
- * 
- * @param folderpath {String} The folder where the file will be created
- * @param filename {String} The name of the file that will be created
- * @param content {Base64 String} Important : The content can't contain the following string (data:image/png[or any other format];base64,). Only the base64 string is expected.
- */
+	* Create a Image file according to its database64 content only.
+	* 
+	* @param folderpath {String} The folder where the file will be created
+	* @param filename {String} The name of the file that will be created
+	* @param content {Base64 String} Important : The content can't contain the following string (data:image/png[or any other format];base64,). Only the base64 string is expected.
+*/
 function savebase64AsFile(folderpath,filename,content,contentType, callback){
     // Convert the base64 string in a Blob
     var DataBlob = b64toBlob(content,contentType);
-    if(DataBlob === null){ console.log('File =>', filename); }
-    
-    console.log("Starting to write the file :3");
+    if(DataBlob === null){ console.error('File =>', filename); }
     
     window.resolveLocalFileSystemURL(folderpath, function(dir) {
-        console.log("Access to the directory granted succesfully");
+        //console.log("Access to the directory granted succesfully");
 		dir.getFile(filename, {create:true}, function(file) {
-            console.log("File created succesfully.");
+            //console.log("File created succesfully.");
             file.createWriter(function(fileWriter) {
-                console.log("Writing content to file");
+                //console.log("Writing content to file");
                 fileWriter.write(DataBlob);
                 callback(filename);
-            }, function(){
-                alert('Unable to save file in path '+ folderpath);
-            });
+				}, function(){
+                console.error('Unable to save file in path '+ folderpath);
+			});
 		});
-    });
+	});
 }
 
 function onDeviceReady() {
 	// Cordova is now initialized. Have fun!
-
+	
 	window.resolveLocalFileSystemURL(cordova.file.applicationDirectory+'www/', function (dirEntry) {
 		console.log('file system open: ' + dirEntry.name);
 		dirEntry.getFile("mode.txt", { create: false, exclusive: false }, function (fileEntry) {
-			cleanDir(cordova.file.dataDirectory, function(e){});
+			createDir(cordova.file.dataDirectory, 'tmp', function(ret){});
+			cleanDir(cordova.file.dataDirectory+'tmp/', function(e){});
 			readFile(fileEntry, function(ret){
 				if(ret.indexOf('debug') === 0){
 					appMode = 'debug';
@@ -253,15 +265,15 @@ function onDeviceReady() {
 					console.log(host, port);
 					socket = new WebSocket("ws://"+host+':'+port);
 					socket.onopen = function(e) {
-					  console.log("Connection established");
+						console.log("Connection established");
 					};
-
+					
 					socket.onmessage = function(event) {
-					  //console.log(`[message] Data received from server:`, event.data.substring(0, 100)+((event.data.length>100)?'...':''));
-					  if(event.data == 'READY'){
-						  socket.send("List");
-						  }
-					  else if(event.data.indexOf('List:') === 0){
+						//console.log(`[message] Data received from server:`, event.data.substring(0, 100)+((event.data.length>100)?'...':''));
+						if(event.data == 'READY'){
+							socket.send("List");
+						}
+						else if(event.data.indexOf('List:') === 0){
 							try{
 								data = JSON.parse(event.data.replace('List:', ''));
 								console.log(data);
@@ -270,102 +282,95 @@ function onDeviceReady() {
 									socket.send("Load:"+data[i]);
 								}
 							}
-						  catch(error){}
-						  }
-					  else if(event.data.indexOf('Load:') === 0){
-						  tdata = event.data.split(':');
-						  //console.log(tdata);
-						  if(tdata.length >= 4){
-						  	pagination = tdata[2].split('|');
-						  	if(dataTab[tdata[1]] === undefined){ dataTab[tdata[1]] = []; }
-						  	if(parseInt(pagination[0]) == 1){ dataTab[tdata[1]] = []; }
-						  	dataTab[tdata[1]][parseInt(pagination[0])-1] = tdata[3];
-						  	if(parseInt(pagination[0]) == parseInt(pagination[1])){
-						  		//console.log(dataTab[tdata[1]].join(''));
-						  		contentTypeArray={
-						  			'png':'image/png', 
-						  			'jpg':'image/jpeg', 
-						  			'jpeg':'image/jpeg', 
-						  			'gif':'image/gif', 
-						  			'bmp':'image/bmp', 
-						  			'webp':'image/webp'
-						  			};
-
-						  		ext = tdata[1].toLowerCase().split('.');
-						  		ext = ext[ext.length - 1];
-						  		contentType = (contentTypeArray[ext] === undefined)?'text/plain':contentTypeArray[ext];
-
-						  		savebase64AsFile(
-						  			cordova.file.dataDirectory,
-						  			dbgPath(tdata[1]),
-						  			dataTab[tdata[1]].join(''),
-						  			contentType, 
-						  			function(ret){
-						  				loadedFiles = loadedFiles + 1;
-										console.log('File loaded '+loadedFiles+'/'+nbFiles+' ('+ret+')');
-										if(loadedFiles == nbFiles){
-											if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ 
-												if(navigator.userAgent.indexOf('Android') != -1)
-													{location.href = cordova.file.dataDirectory + 'index.html';}
-												//else { location.href = cordova.file.applicationDirectory + 'www/index.html'; }
-											}
-											loadDebug();
-										}
-						  			}
-						  		);
-						  	}
-						  }
-						  else{
-						  	WriteDataFile(tdata[1], Base64.decode(tdata[2]), function(ret){
-								loadedFiles = loadedFiles + 1;
-								console.log('File loaded '+loadedFiles+'/'+nbFiles);
-								if(loadedFiles == nbFiles){
-									if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ 
-										if(navigator.userAgent.indexOf('Android') != -1)
-											{location.href = cordova.file.dataDirectory + 'index.html';}
-										//else { location.href = cordova.file.applicationDirectory + 'www/index.html'; }
+							catch(error){}
+						}
+						else if(event.data.indexOf('Load:') === 0){
+							contentTypeArray={
+								'png':'image/png', 
+								'jpg':'image/jpeg', 
+								'jpeg':'image/jpeg', 
+								'gif':'image/gif', 
+								'bmp':'image/bmp', 
+								'webp':'image/webp'
+							};
+							
+							tdata = event.data.split(':');
+							
+							ext = tdata[1].toLowerCase().split('.');
+							ext = ext[ext.length - 1];
+							contentType = (contentTypeArray[ext] === undefined)?'text/plain':contentTypeArray[ext];
+							
+							dataf = tdata[2];
+							
+							//console.log(tdata);
+							if(tdata.length >= 4){
+								pagination = tdata[2].split('|');
+								if(dataTab[tdata[1]] === undefined){ dataTab[tdata[1]] = []; }
+								if(parseInt(pagination[0]) == 1){ dataTab[tdata[1]] = []; }
+								dataTab[tdata[1]][parseInt(pagination[0])-1] = tdata[3];
+								if(parseInt(pagination[0]) == parseInt(pagination[1])){
+									dataf = dataTab[tdata[1]].join('');
+								}
+								else{ return; }
+							}
+							
+							savebase64AsFile(
+								cordova.file.dataDirectory+'tmp/',
+								dbgPath(tdata[1]),
+								dataf,
+								contentType, 
+								function(ret){
+									loadedFiles = loadedFiles + 1;
+									console.log('File loaded '+loadedFiles+'/'+nbFiles+' ('+ret+')');
+									if(loadedFiles == nbFiles){
+										if(location.href.indexOf(cordova.file.dataDirectory) !== 0){ 
+											listDir(cordova.file.dataDirectory, function(e){});
+											listDir(cordova.file.dataDirectory + 'tmp', function(e){});
+											if(navigator.userAgent.indexOf('Android') != -1)
+												{location.href = cordova.file.dataDirectory + 'tmp/index.html';}
+											// else { location.href = cordova.file.applicationDirectory + 'www/index.html'; }
 										}
 										loadDebug();
 									}
-								});
-						  	}
-						  }
-					  else if(event.data.indexOf('change|') === 0){
-						  location.reload();
-						  }
-					  else if(event.data.indexOf('add|') === 0){
+								}
+							);
+						}
+						else if(event.data.indexOf('change|') === 0){
 							location.reload();
-						  
-						  }
-					  else if(event.data.indexOf('unlink|') === 0){
+						}
+						else if(event.data.indexOf('add|') === 0){
 							location.reload();
-						  
-						  }
+							
+						}
+						else if(event.data.indexOf('unlink|') === 0){
+							location.reload();
+							
+						}
 					};
-
+					
 					socket.onclose = function(event) {
-					  if (event.wasClean) {
-						console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-					  } else {
-						// e.g. server process killed or network down
-						// event.code is usually 1006 in this case
-						console.log('[close] Connection died');
-					  }
+						if (event.wasClean) {
+							console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+							} else {
+							// e.g. server process killed or network down
+							// event.code is usually 1006 in this case
+							console.log('[close] Connection died');
+						}
 					};
-
+					
 					socket.onerror = function(error) {
-					  console.log(`[error]`, error);
+						console.log(`[error]`, error);
 					};
-					}
+				}
 				else{
 					appMode = 'release';
 					script = document.createElement('script');
 					script.setAttribute('type', 'text/javascript');
 					script.setAttribute('src', 'js/main.js');
 					document.body.appendChild(script);
-					}
+				}
 				console.log("Im: " + ret);
-				});
+			});
 		}, onErrorFunc);
 	}, onErrorFunc);
 }
@@ -374,12 +379,12 @@ function loadDebug(){
 	console.log("loadDebug();");	
 	setTimeout("document.querySelector('.app').setAttribute('debug', 'true');", 500);
 	document.head.querySelectorAll('base')[0].remove();
-
+	
 	base = document.createElement('base');
 	//base.setAttribute('href', cordova.file.dataDirectory);
 	base.setAttribute('href', cordova.file.applicationDirectory+'www/');
 	document.head.appendChild(base);
-
+	
 	script = document.createElement('script');
 	script.setAttribute('type', 'text/javascript');
 	//script.setAttribute('src', cordova.file.dataDirectory+'js__main.js');

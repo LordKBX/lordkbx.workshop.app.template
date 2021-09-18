@@ -9,19 +9,21 @@ var menuData = [];
 var menuIsOn = false;
 var menuIsOnDisplay = false;
 
+var baseConf = cordova.file.applicationDirectory+'www/';
+
 function mainInit() {
     // Cordova is now initialized. Have fun!
     console.log('Running cordova-' + cordova.platformId + '@' + cordova.version);
-    baseConf = (appMode == 'debug')?cordova.file.dataDirectory:cordova.file.applicationDirectory+'www/';
+    baseConf = (appMode == 'debug')?cordova.file.dataDirectory+'tmp/':cordova.file.applicationDirectory+'www/';
     
 
     window.resolveLocalFileSystemURL(baseConf, function (dirEntry) {
 		console.log('file system open: ' + dirEntry.name);
 		dirEntry.getFile("config.json", { create: false, exclusive: false }, function (fileEntry) {
 			readFile(fileEntry, function(ret){
-                console.log(ret);
                 try{ settings = JSON.parse(ret); }
                 catch(err){ settings = ret; }
+                console.log('settings =', settings);
 
                 default_segment = clone(settings.default_segment);
                 current_segment = clone(settings.default_segment);
@@ -45,28 +47,26 @@ function mainInit() {
                     if(data !== false){
                         if(appMode == 'debug'){
                             for(var j=0; j<data.length; j++){
-                                console.log(data[j]);
+                                //console.log(data[j]);
                                 if(data[j].search('segments__') === 0){
-                                    console.log(data[j]);
                                     filename = data[j].replace('segments__','').replace('.html','').replace('.css','');
 
-                                    if(data[j].search('.html') != -1){ injectSegment(path+data[j], filename); }
-                                    if(data[j].search('.css') != -1){ injectCss(path+data[j], filename); }
-                                    if(data[j].search('.js') != -1){ injectScript(path+data[j]); }
-                                    if(data[j].search('.nav') != -1){ buildMenu(path+data[j]); }
+                                    if(data[j].search(new RegExp('.html$','i')) != -1){ injectSegment(path+data[j], filename); }
+                                    if(data[j].search(new RegExp('.css$','i')) != -1){ injectCss(path+data[j], filename); }
+                                    if(data[j].search(new RegExp('.js$','i')) != -1){ injectScript(path+data[j]); }
+                                    if(data[j].search(new RegExp('.nav$','i')) != -1){ buildMenu(path+data[j]); }
                                 }
                             }
                         }
                         else{
                             for(var k=0; k<data.length; k++){
                                 filename = data[k].replace('.html','').replace('.css','');
-                                if(data[k].search('.html') != -1){ injectSegment(path+data[k], filename); }
-                                if(data[k].search('.css') != -1){ injectCss(path+data[k], filename); }
-                                if(data[k].search('.js') != -1){ injectScript(path+data[k]); }
-                                if(data[j].search('.nav') != -1){ buildMenu(path+data[k]); }
+                                if(data[k].search(new RegExp('.html$','i')) != -1){ injectSegment(path+data[k], filename); }
+                                if(data[k].search(new RegExp('.css$','i')) != -1){ injectCss(path+data[k], filename); }
+                                if(data[k].search(new RegExp('.js$','i')) != -1){ setTimout('injectScript("'+path+data[k]+'");', 200); }
+                                if(data[j].search(new RegExp('.nav$','i')) != -1){ buildMenu(path+data[k]); }
                             }
                         }
-                        console.log(JSON.stringify(data));
                         setTimeout("if(menuIsOn == false){ $('.app').addClass('headless'); }", 300);
                     }
                 });
@@ -79,9 +79,9 @@ function mainInit() {
 }
 
 function injectScript(path){
-    baseConf = (appMode == 'debug')?cordova.file.dataDirectory:cordova.file.applicationDirectory+'www/';
 
     DirectReadDataFile(path, function(data){
+		console.log('try inject script '+path);
         script = document.createElement('script');
         script.setAttribute('type', 'text/javascript');
         script.innerHTML = data;
@@ -91,7 +91,7 @@ function injectScript(path){
 
 function injectSegment(path, name){
     DirectReadDataFile(path, function(data){
-        baseConf = (appMode == 'debug')?cordova.file.dataDirectory+'segments__':cordova.file.applicationDirectory+'www/segments/';
+        mbaseConf = baseConf + ((appMode == 'debug')?'segments__':'segments/');
 
         section = document.createElement('section');
         section.setAttribute('id', 'section_'+name);
@@ -99,22 +99,12 @@ function injectSegment(path, name){
 
         regex = /src="(.*)"/g;
         found = data.match(regex);
-        console.log('found = ', found);
 
         if(found != null){
             for(fi = 0; fi < found.length; fi++){
-                fil = baseConf + dbgPath(found[fi].replace('src="', '').replace('"', ''));
+                fil = mbaseConf + dbgPath(found[fi].replace('src="', '').replace('"', ''));
 
                 data = data.replace(found[fi], 'src="'+fil+'"');
-                /*
-                id = MGUID();
-                data = data.replace(found[fi], 'id="'+id+'"')
-                console.log('fil =', fil);
-                loadIFileInBlob(fil, id, 'image/png', function(ret, dest_id){
-                    console.log('ret =', ret);
-                    $('#'+dest_id).attr('src', ret);
-                })
-                */
             }
         }
 
@@ -124,7 +114,6 @@ function injectSegment(path, name){
 }
 
 function injectCss(path, name){
-    baseConf = (appMode == 'debug')?cordova.file.dataDirectory:cordova.file.applicationDirectory+'www/';
     DirectReadDataFile(path, function(data){
         css = document.createElement('style');
         css.setAttribute('id', 'style_'+name);
@@ -135,7 +124,7 @@ function injectCss(path, name){
 
 function buildMenu(path){
     if(menuIsOn === true){ return; }
-    baseConf = (appMode == 'debug')?cordova.file.dataDirectory+'segments__':cordova.file.applicationDirectory+'www/segments/';
+    mbaseConf = baseConf + ((appMode == 'debug')?'segments__':'segments/');
     DirectReadDataFile(path, function(data){
         try{ 
             menuData = JSON.parse(data);
@@ -159,7 +148,7 @@ function buildMenu(path){
                 if(menuData[i].icon !== undefined && menuData[i].icon !== null)
                     { ctl += '<td><span class="glyphicon glyphicon-'+menuData[i].icon+'"></span></td>'; }
                 if(menuData[i].fileIcon !== undefined && menuData[i].fileIcon !== null)
-                    { ctl += '<td><span class="fileicon" style="background:url(\''+baseConf + dbgPath(menuData[i].fileIcon)+'\'); background-size: 100%; background-repeat: no-repeat;"></span></td>'; }
+                    { ctl += '<td><span class="fileicon" style="background:url(\''+mbaseConf + dbgPath(menuData[i].fileIcon)+'\'); background-size: 100%; background-repeat: no-repeat;"></span></td>'; }
 
                 link.innerHTML = ctl + '<td class="right"><span>' + menuData[i].name + '</span></td></tr></tbody></table>';
                 if(menuData[i].bottom === true){ nav.querySelector('.bottom').appendChild(link); }
